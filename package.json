@@ -1,0 +1,24 @@
+{
+  "name": "gpio-mock",
+  "version": "1.0.0",
+  "description": "A framework to mock RPi GPIO",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "gpio",
+    "rpi",
+    "raspberry",
+    "pi",
+    "mock",
+    "test"
+  ],
+  "author": "Oscar Djupfeldt",
+  "license": "ISC",
+  "dependencies": {
+    "cept": "1.0.1",
+    "rimraf": "2.6.1"
+  }
+}
