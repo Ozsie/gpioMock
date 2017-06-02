@@ -1,4 +1,8 @@
 # GPIO Mock
+[![NPM](https://nodei.co/npm/gpio-mock.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/gpio-mock/)
+
+[![Build Status](https://travis-ci.org/Ozsie/gpioMock.svg?branch=master)](https://travis-ci.org/Ozsie/gpioMock)
+[![Coverage Status](https://coveralls.io/repos/github/Ozsie/gpioMock/badge.svg?branch=master)](https://coveralls.io/github/Ozsie/gpioMock?branch=master)
 
 A framework to mock GPIO by redirecting calls to /sys/class/gpio/* to ./sys/class/gpio/*
 
