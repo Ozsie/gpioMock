@@ -7,7 +7,8 @@ let rimraf = require('rimraf');
 let mkdirp = require('mkdirp');
 let utils = require('./utils');
 
-console.log(JSON.stringify(utils));
+var mockGPIOPath;
+var mockDS18B20Path;
 
 var ofs = {
   existsSync: fs.existsSync,
@@ -17,11 +18,11 @@ var ofs = {
 };
 
 var stoppers = [];
+var ds18b20 = {};
 
 let checkExport = function() {
   ofs.readFile('./sys/class/gpio/export', 'utf8', function(err, data) {
     if (!err && data && typeof parseInt(data) === 'number' && !ofs.existsSync('./sys/class/gpio/gpio' + data)) {
-      console.log('export');
       fs.mkdirSync('./sys/class/gpio/gpio' + data);
       ofs.writeFileSync('./sys/class/gpio/gpio' + data + '/direction', 'in');
       ofs.writeFileSync('./sys/class/gpio/gpio' + data + '/value', '0');
@@ -32,17 +33,10 @@ let checkExport = function() {
 
 let checkUnexport = function() {
   ofs.readFile('./sys/class/gpio/unexport', 'utf8', function(err, data) {
-    console.log('check unexport');
     if (!err && data && typeof parseInt(data) === 'number' && ofs.existsSync('./sys/class/gpio/gpio' + data)) {
-      console.log('unexporting');
       rimraf('./sys/class/gpio/gpio' + data, function(err, data) {
         ofs.writeFileSync('./sys/class/gpio/unexport', '');
-        console.log('rimraf err ' + err);
-        console.log('rimraf data ' + data);
       });
-    } else {
-      console.log('err ' + err);
-      console.log('data ' + data);
     }
   });
 };
@@ -59,7 +53,6 @@ let mock = function() {
   stoppers.push(
     cept(fs, 'existsSync', function(path) {
       path = utils.replacePath(path);
-      console.log('Replaced path ' + path);
       return ofs.existsSync(path);
     })
   );
@@ -67,7 +60,6 @@ let mock = function() {
   stoppers.push(
     cept(fs, 'writeFile', function(path, value, callback) {
       path = utils.replacePath(path);
-      console.log("mocking writeFile " + path);
       ofs.writeFile(path, value, callback);
     })
   );
@@ -80,26 +72,90 @@ let mock = function() {
   );
 
   stoppers.push(
-    cept(fs, 'readFile', function(path, value, callback) {
+    cept(fs, 'readFile', function(path, encoding, callback) {
       path = utils.replacePath(path);
-      ofs.readFile(path, value, callback);
+      ofs.readFile(path, encoding, callback);
     })
   );
+
+  ofs.readFile('ds18b20.json', 'utf8', function(err, fd) {
+    if (!err) {
+      ds18b20 = JSON.parse(fd);
+
+      let sensorFunction = function(sensor) {
+        setTimeout(function() {
+          /* jshint ignore:start */
+          var fn = Function(sensor.temperature);
+          var value = fn();
+          ofs.writeFileSync(mockDS18B20Path + '/' + key + '/w1_slave', value);
+          if (!sensor.stop) {
+            sensorFunction();
+          }
+          /* jshint ignore:end */
+        }, 250);
+      };
+
+      let sensorStatic = function(sensor) {
+        setTimeout(function() {
+          ofs.writeFileSync(mockDS18B20Path + '/' + key + '/w1_slave', parseInt(sensor.temperature * 1000));
+          if (!sensor.stop) {
+            sensorStatic();
+          }
+        }, 250);
+      };
+
+      let addW1Slave = function(key) {
+        let sensor = ds18b20[key];
+        mkdirp(mockDS18B20Path + '/' + key, function(err) {
+          if (!err) {
+            if (sensor.behavior === 'static') {
+              sensorStatic(sensor);
+            } else if (sensor.behavior === 'external') {
+              ofs.writeFileSync(mockDS18B20Path + '/' + key + '/w1_slave', parseInt(sensor.temperature * 1000));
+            } else {
+              sensorFunction(sensor);
+            }
+          }
+        });
+      };
+
+      for (var key in ds18b20) {
+        addW1Slave(key);
+      }
+    }
+  });
 };
 
-let start = function(mockLocation) {
+let start = function(mockLocation, callback) {
+  if (typeof mockLocation === 'function') {
+    callback = mockLocation;
+    mockLocation = undefined;
+  }
   if (!mockLocation) {
     mockLocation = '.';
   }
-  utils.updatePaths(mockLocation);
-  mock();
-  startWatcher();
-  console.log("Mock located in " + mockLocation);
+  utils.updatePaths(mockLocation, function(err) {
+    if (!err) {
+      mockGPIOPath = utils.mockGPIOPath;
+      mockDS18B20Path = utils.mockDS18B20Path;
+      mock();
+      startWatcher();
+      console.log("Mock located in " + mockLocation);
+      callback();
+    } else {
+      console.error(err);
+      callback(err);
+    }
+  });
 };
 
 let stop = function() {
   for (var i in stoppers) {
     stoppers[i]();
+  }
+  for (var id in ds18b20) {
+    var sensor = ds18b20[id];
+    sensor.stop = true;
   }
 };
 

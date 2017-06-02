@@ -19,29 +19,39 @@ let replacePath = function(path) {
   return path;
 };
 
-let updatePaths = function(mockLocation) {
-  mockDS18B20Path = mockLocation + sysDS18B20Path;
-  mockGPIOPath = mockLocation + sysGPIOPath;
-  createDirectories(mockDS18B20Path);
-  createDirectories(mockGPIOPath);
+let updatePaths = function(mockLocation, callback) {
+  var prefix = mockLocation;
+  if (mockLocation.endsWith('/')) {
+    prefix = mockLocation.substring(0, mockLocation.length - 1);
+  }
+  console.log("Mock location " + prefix);
+  mockGPIOPath = prefix + sysGPIOPath;
+  createDirectories(mockGPIOPath, function() {
+    mockDS18B20Path = prefix + sysDS18B20Path;
+    createDirectories(mockDS18B20Path, callback);
+  });
 }
 
-let createDirectories = function(path) {
-  fs.stat(mockGPIOPath, function (err, stats) {
+let createDirectories = function(path, callback) {
+  fs.stat(path, function (err, stats) {
+    // Path does not exist
     if (err) {
       mkdirp(path, function(err) {
-        if (err) {
-          console.log(err);
-        }
+        callback(err);
       });
     }
-    if (!stats.isDirectory()) {
+    // Path is not directory
+    else if (!stats.isDirectory()) {
       callback(new Error(path + ' exists and is not a directory!'));
+    } else {
+      callback();
     }
   });
 };
 
 module.exports = {
   replacePath: replacePath,
-  updatePaths: updatePaths
+  updatePaths: updatePaths,
+  mockGPIOPath: mockGPIOPath,
+  mockDS18B20Path: mockDS18B20Path
 };
