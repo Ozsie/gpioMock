@@ -5,20 +5,62 @@ let fs = require('fs');
 let cept = require('cept');
 let rimraf = require('rimraf');
 let mkdirp = require('mkdirp');
-let utils = require('./utils');
 
 var mockGPIOPath;
 var mockDS18B20Path;
 
-var ofs = {
-  existsSync: fs.existsSync,
-  writeFile: fs.writeFile,
-  writeFileSync: fs.writeFileSync,
-  readFile: fs.readFile
-};
+var ofs = {};
 
 var stoppers = [];
 var ds18b20 = {};
+
+let sysGPIOPath = '/sys/class/gpio';
+let sysDS18B20Path = '/sys/bus/w1/devices/';
+
+var mockGPIOPath = './sys/class/gpio';
+var mockDS18B20Path = './sys/bus/w1/devices';
+
+let replacePath = function(path) {
+  if (path && typeof path !== 'string') {
+    return path;
+  }
+  if (path && typeof path === 'string' && path.startsWith(sysGPIOPath)) {
+    path = path.replace(sysGPIOPath, mockGPIOPath);
+  } else if (path && typeof path === 'string' && path.startsWith(sysDS18B20Path)) {
+    path = path.replace(sysDS18B20Path, mockDS18B20Path);
+  }
+  return path;
+};
+
+let updatePaths = function(mockLocation, callback) {
+  var prefix = mockLocation;
+  if (mockLocation.endsWith('/')) {
+    prefix = mockLocation.substring(0, mockLocation.length - 1);
+  }
+  console.log("Mock location " + prefix);
+  mockGPIOPath = prefix + sysGPIOPath;
+  createDirectories(mockGPIOPath, function() {
+    mockDS18B20Path = prefix + sysDS18B20Path;
+    createDirectories(mockDS18B20Path, callback);
+  });
+};
+
+let createDirectories = function(path, callback) {
+  fs.stat(path, function (err, stats) {
+    // Path does not exist
+    if (err) {
+      mkdirp(path, function(err) {
+        callback(err);
+      });
+    }
+    // Path is not directory
+    else if (!stats.isDirectory()) {
+      callback(new Error(path + ' exists and is not a directory!'));
+    } else {
+      callback();
+    }
+  });
+};
 
 let checkExport = function() {
   ofs.readFile('./sys/class/gpio/export', 'utf8', function(err, data) {
@@ -50,33 +92,34 @@ let startWatcher = function() {
 };
 
 let mock = function() {
-  stoppers.push(
-    cept(fs, 'existsSync', function(path) {
-      path = utils.replacePath(path);
-      return ofs.existsSync(path);
-    })
-  );
+  let copy = function(index) {
+    if (typeof fs[index] === 'function') {
+      ofs[index] = fs[index];
+    }
+  };
+  let replace = function(index) {
+    if (typeof fs[index] === 'function') {
+      ofs[index] = fs[index];
+      stoppers.push(
+        cept(fs, index, function() {
+          var args = [];
+          for (var i in arguments) {
+            if (typeof arguments[i] === 'string') {
+              args.push(replacePath(arguments[i]));
+            } else {
+              args.push(arguments[i]);
+            }
+          }
+          return ofs[index].apply(this, args);
+        })
+      );
+    }
+  };
 
-  stoppers.push(
-    cept(fs, 'writeFile', function(path, value, callback) {
-      path = utils.replacePath(path);
-      ofs.writeFile(path, value, callback);
-    })
-  );
-
-  stoppers.push(
-    cept(fs, 'writeFileSync', function(path, value, callback) {
-      path = utils.replacePath(path);
-      ofs.writeFileSync(path, value, callback);
-    })
-  );
-
-  stoppers.push(
-    cept(fs, 'readFile', function(path, encoding, callback) {
-      path = utils.replacePath(path);
-      ofs.readFile(path, encoding, callback);
-    })
-  );
+  for (var index in fs) {
+    copy(index);
+    replace(index);
+  }
 
   ofs.readFile('ds18b20.json', 'utf8', function(err, fd) {
     if (!err) {
@@ -134,10 +177,9 @@ let start = function(mockLocation, callback) {
   if (!mockLocation) {
     mockLocation = '.';
   }
-  utils.updatePaths(mockLocation, function(err) {
+  updatePaths(mockLocation, function(err) {
     if (!err) {
-      mockGPIOPath = utils.mockGPIOPath;
-      mockDS18B20Path = utils.mockDS18B20Path;
+      console.log('starting');
       mock();
       startWatcher();
       console.log("Mock located in " + mockLocation);
@@ -150,6 +192,7 @@ let start = function(mockLocation, callback) {
 };
 
 let stop = function() {
+  console.log('STOP');
   for (var i in stoppers) {
     stoppers[i]();
   }

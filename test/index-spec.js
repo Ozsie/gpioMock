@@ -8,7 +8,7 @@ let gpioMock = require('./../index');
 
 describe('index', function() {
 
-  after(function() {
+  afterEach(function() {
     gpioMock.stop();
   });
 
@@ -25,6 +25,7 @@ describe('index', function() {
             var val = fs.openSync('./sys/class/gpio/gpio1/value', 'r');
             expect(dir).to.exist;
             expect(val).to.exist;
+            console.log('DONE');
             done();
           });
         }, 750);
@@ -33,9 +34,11 @@ describe('index', function() {
   });
 
   it('writing to /sys/class/gpio/unexport using fs.writeFile() should remove directories and files in mock directory', function(done) {
+    console.log('t2');
     gpioMock.start(function(err) {
       console.log('Started ' + err);
       fs.writeFile('/sys/class/gpio/unexport', '1', function(err, data) {
+        console.log('written');
         expect(err).to.be.null;
         expect(data).to.be.undefined;
         setTimeout(function() {
@@ -48,11 +51,13 @@ describe('index', function() {
     })
   });
 
-  it('call to fs.existsSync() should return true for /sys/class/gpio/export', function() {
+  it('call to fs.existsSync() should return true for /sys/class/gpio/export', function(done) {
     gpioMock.start(function(err) {
       console.log('Started ' + err);
       var exists = fs.existsSync('/sys/class/gpio/export');
       expect(exists).to.equal(true);
+      console.log('DONE existsSync');
+      done();
     });
   });
 
