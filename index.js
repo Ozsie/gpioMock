@@ -105,5 +105,6 @@ let stop = function() {
 
 module.exports = {
   start: start,
-  stop: stop
+  stop: stop,
+  ofs: ofs
 };

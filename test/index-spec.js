@@ -43,4 +43,18 @@ describe('index', function() {
       }, 750);
     });
   });
+
+  it('call to fs.existsSync() should return true for /sys/class/gpio/export', function() {
+    var exists = fs.existsSync('/sys/class/gpio/export');
+    expect(exists).to.equal(true);
+  });
+
+  it('call to fs.writeFileSync() should redirect /sys/class/gpio/export to ./sys/class/gpio/export', function(done) {
+    fs.writeFileSync('/sys/class/gpio/export', '1');
+    gpioMock.ofs.readFile('./sys/class/gpio/export', 'utf8', function(err, fd) {
+      expect(err).to.be.null;
+      expect(fd).to.equal('1');
+      done();
+    });
+  });
 });
