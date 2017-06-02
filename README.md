@@ -36,6 +36,9 @@ gpioMock.start(function(err) {
       });
     }
   });
+  
+  // Reset changes to fs when done
+  gpioMock.stop();
 });
 ```
 
@@ -79,6 +82,9 @@ gpioMock.start(function(err) {
       }
     }
   });
+  
+  // Reset changes to fs when done
+  gpioMock.stop();
 });
 ```
 
