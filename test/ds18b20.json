@@ -1,14 +1,14 @@
 {
   "28-800000000001": {
-    "behaviour": "function",
+    "behavior": "function",
     "temperature": "return Math.random() * 100;"
   },
   "28-800000000002": {
-    "behaviour": "static",
+    "behavior": "static",
     "temperature": "12"
   },
   "28-800000000003": {
-    "behaviour": "external",
+    "behavior": "external",
     "temperature": "12"
   }
 }
