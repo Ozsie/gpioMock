@@ -5,7 +5,12 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "publish": "git tag -a v$npm_package_version -m 'tag version v$npm_package_version'",
+    "postpublish": "git push --tags",
+    "pretest": "jshint index.js",
+    "test": "istanbul cover _mocha test --recursive",
+    "posttest": "rm -r ./docs && jsdoc -c ./jsdoc.json -d ./docs",
+    "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls"
   },
   "keywords": [
     "gpio",
@@ -15,10 +20,23 @@
     "mock",
     "test"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ozsie/gpioMock.git"
+  },
   "author": "Oscar Djupfeldt",
   "license": "ISC",
   "dependencies": {
     "cept": "1.0.1",
-    "rimraf": "2.6.1"
+    "rimraf": "2.6.1",
+    "mkdirp": "0.5.1"
+  },
+  "devDependencies": {
+    "jshint": "2.9.4",
+    "mocha": "^3.2.0",
+    "chai": "^4.0.0-canary.1",
+    "istanbul": "^0.4.5",
+    "coveralls": "^2.13.1",
+    "jsdoc": "^3.4.3"
   }
 }
