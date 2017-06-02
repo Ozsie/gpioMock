@@ -13,6 +13,9 @@ GPIO Mock redirects any fs function call concerning paths starting with '/sys/cl
 './sys/class/gpio'. This means that tests that either do not require hardware, or tests that can function with
 simulated hardware can function without changes to the code.
 
+## Documentation
+https://ozsie.github.io/gpioMock/gpio-mock/1.0.1
+
 ## Some examples
 
 ### Using 'fs' directly
