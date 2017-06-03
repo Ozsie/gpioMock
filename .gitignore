@@ -3,3 +3,4 @@ coverage
 .coveralls.yml
 gpioMock.iml
 npm-debug.log
+mock
