@@ -24,23 +24,18 @@ let sysGPIOPath = '/sys/class/gpio';
 
 var mockGPIOPath = './sys/class/gpio';
 
-var watchExportUnexport = function(eventType, filename) {
-  if (eventType === 'change' && filename === 'export') {
-    ofs.readFile('./sys/class/gpio/export', 'utf8', function(err, data) {
-      if (!err && data && typeof parseInt(data) === 'number' && !ofs.existsSync('./sys/class/gpio/gpio' + data)) {
-        ofs.mkdirSync('./sys/class/gpio/gpio' + data);
-        ofs.writeFileSync('./sys/class/gpio/gpio' + data + '/direction', 'in');
-        ofs.writeFileSync('./sys/class/gpio/gpio' + data + '/value', '0');
-        ofs.writeFileSync('./sys/class/gpio/export', '');
-      }
-    });
-  } else if(eventType === 'change' && filename === 'unexport') {
-    ofs.readFile('./sys/class/gpio/unexport', 'utf8', function(err, data) {
-      if (!err && data && typeof parseInt(data) === 'number' && ofs.existsSync('./sys/class/gpio/gpio' + data)) {
-        rimraf('./sys/class/gpio/gpio' + data, function(err, data) {
-          ofs.writeFileSync('./sys/class/gpio/unexport', '');
-        });
-      }
+var exportUnexport = function(filename, data) {
+  if (!data || typeof parseInt(data) !== 'number') {
+    return;
+  }
+  if (filename === 'export' && !ofs.existsSync('./sys/class/gpio/gpio' + data)) {
+    ofs.mkdirSync('./sys/class/gpio/gpio' + data);
+    ofs.writeFileSync('./sys/class/gpio/gpio' + data + '/direction', 'in');
+    ofs.writeFileSync('./sys/class/gpio/gpio' + data + '/value', '0');
+    ofs.writeFileSync('./sys/class/gpio/export', '');
+  } else if(filename === 'unexport' && ofs.existsSync('./sys/class/gpio/gpio' + data)) {
+    rimraf('./sys/class/gpio/gpio' + data, function(err, data) {
+      ofs.writeFileSync('./sys/class/gpio/unexport', '');
     });
   }
 };
@@ -107,6 +102,15 @@ let mock = function() {
       ofs[index] = fs[index];
       stoppers.push(
         cept(fs, index, function() {
+          if (index === 'writeFile' || index === 'writeFileSync') {
+            if (arguments[0].endsWith('unexport')) {
+              console.log('Unexport ' + arguments[1]);
+              exportUnexport('unexport', arguments[1]);
+            } else if (arguments[0].endsWith('export')) {
+              console.log('Export ' + arguments[1]);
+              exportUnexport('export', arguments[1]);
+            }
+          }
           var args = [];
           for (var i in arguments) {
             if (typeof arguments[i] === 'string') {
@@ -147,8 +151,6 @@ let start = function(mockLocation, callback) {
     if (!err) {
       mock();
       startWatcher();
-      ofs.watch(mockGPIOPath + '/export', watchExportUnexport);
-      ofs.watch(mockGPIOPath + '/unexport', watchExportUnexport);
       callback();
     } else {
       console.error(err);
