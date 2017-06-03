@@ -53,7 +53,7 @@ describe('ds18b20', function() {
       gpioMock.addDS18B20('2', external, function(err) {
         expect(err).to.be.undefined;
 
-        let f = { "behavior": "function", "temperature": "return 55000" };
+        let f = { "behavior": "function", "temperature": function() {return 55000;} };
 
         gpioMock.addDS18B20('3', f, function(err) {
           expect(err).to.be.undefined;

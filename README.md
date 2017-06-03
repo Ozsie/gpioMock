@@ -108,3 +108,32 @@ function ledSwitch() {
   }, 200)
 }
 ```
+
+### Simulating DS18B20 digital thermometer
+```
+let gpioMock = require('gpio-mock');
+let ds18b20 = require('mc-tempsensor');
+
+let f = {
+  "behavior": "function",
+  "temperature": function() {
+    return Math.random() * 100000;
+  }
+};
+
+gpioMock.start(function(err) {
+  gpioMock.addDS18B20('28-800000263717', f, function(err) {
+    if (!err) {
+      tempsensor.init('28-800000263717');
+      
+      tempSensor.readAndParse(function(err, data) {
+        if (err) {
+          // Handle error
+        } else {
+          console.log('Temperature is ' + data[0].temperature.celcius + ' C');
+        }
+      })
+    }
+  });
+});
+```

@@ -22,11 +22,8 @@ let sensorFunction = function() {
 };
 
 let handleFunctionSensor = function(id, sensor) {
-  /* jshint ignore:start */
-  var fn = Function(sensor.temperature);
-  var value = fn();
+  var value = sensor.temperature();
   fs.writeFileSync(mockDS18B20Path + '/' + id + '/w1_slave', ds18b20FileContents + value);
-  /* jshint ignore:end */
 };
 
 let sensorStatic = function() {
@@ -72,17 +69,6 @@ let updateSensors = function(callback) {
   }
 };
 
-let mock = function() {
-  fs.readFile('ds18b20.json', 'utf8', function(err, fd) {
-    if (!err) {
-      ds18b20 = JSON.parse(fd);
-      updateSensors(function() {
-        console.log('Updated sensors from file');
-      });
-    }
-  });
-};
-
 let stop = function() {
   for (var id in ds18b20) {
     var sensor = ds18b20[id];
@@ -110,7 +96,6 @@ module.exports = {
   sensorStatic: sensorStatic,
   handleStaticSensor: handleStaticSensor,
   updateSensors: updateSensors,
-  mock: mock,
   stop: stop,
   addDS18B20: addDS18B20,
   setDS18B20: setDS18B20,

@@ -125,8 +125,6 @@ let mock = function() {
     copy(index);
     replace(index);
   }
-
-  ds18b20.mock();
 };
 
 /**
