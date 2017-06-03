@@ -64,6 +64,8 @@ let updatePaths = function(mockLocation, callback) {
   }
   mockGPIOPath = prefix + sysGPIOPath;
   createDirectories(mockGPIOPath, function() {
+    fs.closeSync(fs.openSync(mockGPIOPath + '/export', 'w'));
+    fs.closeSync(fs.openSync(mockGPIOPath + '/unexport', 'w'));
     ds18b20.mockPath = prefix + ds18b20.sysPath;
     createDirectories(ds18b20.mockPath, callback);
   });

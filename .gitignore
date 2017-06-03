@@ -4,3 +4,4 @@ coverage
 gpioMock.iml
 npm-debug.log
 mock
+sys
