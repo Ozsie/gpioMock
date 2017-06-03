@@ -17,16 +17,14 @@ describe('index', function() {
       fs.writeFile('/sys/class/gpio/export', '1', function(err, data) {
         expect(err).to.be.null;
         expect(data).to.be.undefined;
-        setTimeout(function() {
-          fs.stat('./sys/class/gpio/gpio1', function (err, stats) {
-            expect(stats.isDirectory()).to.equal(true);
-            var dir = fs.openSync('./sys/class/gpio/gpio1/direction', 'r');
-            var val = fs.openSync('./sys/class/gpio/gpio1/value', 'r');
-            expect(dir).to.exist;
-            expect(val).to.exist;
-            done();
-          });
-        }, 750);
+        fs.stat('./sys/class/gpio/gpio1', function (err, stats) {
+          expect(stats.isDirectory()).to.equal(true);
+          var dir = fs.openSync('./sys/class/gpio/gpio1/direction', 'r');
+          var val = fs.openSync('./sys/class/gpio/gpio1/value', 'r');
+          expect(dir).to.exist;
+          expect(val).to.exist;
+          done();
+        });
       });
     });
   });
@@ -41,7 +39,7 @@ describe('index', function() {
             expect(err).to.exist;
             done();
           });
-        }, 750);
+        }, 100);
       });
     })
   });
@@ -61,9 +59,7 @@ describe('index', function() {
         expect(err).to.be.null;
         expect(fd).to.equal('1');
         fs.writeFileSync('/sys/class/gpio/unexport', '1');
-        setTimeout(function() {
-          done();
-        }, 750);
+        done();
       });
     });
   });
@@ -75,9 +71,7 @@ describe('index', function() {
         expect(err).to.be.null;
         expect(fd).to.equal('1');
         fs.writeFileSync('/sys/class/gpio/unexport', '1');
-        setTimeout(function() {
-          done();
-        }, 750);
+        done();
       });
     });
   });
@@ -86,14 +80,10 @@ describe('index', function() {
     gpioMock.start('./mock/', function(err) {
       fs.writeFileSync('/sys/class/gpio/export', '1');
       gpioMock.ofs.readFile('./mock/sys/class/gpio/export', 'utf8', function(err, fd) {
-        setTimeout(function() {
-          expect(err).to.be.null;
-          expect(fd).to.equal('1');
-          fs.writeFileSync('/sys/class/gpio/unexport', '1');
-          setTimeout(function() {
-            done();
-          }, 750);
-        }, 500);
+        expect(err).to.be.null;
+        expect(fd).to.equal('1');
+        fs.writeFileSync('/sys/class/gpio/unexport', '1');
+        done();
       });
     });
   });

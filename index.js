@@ -104,10 +104,8 @@ let mock = function() {
         cept(fs, index, function() {
           if (index === 'writeFile' || index === 'writeFileSync') {
             if (arguments[0].endsWith('unexport')) {
-              console.log('Unexport ' + arguments[1]);
               exportUnexport('unexport', arguments[1]);
             } else if (arguments[0].endsWith('export')) {
-              console.log('Export ' + arguments[1]);
               exportUnexport('export', arguments[1]);
             }
           }
