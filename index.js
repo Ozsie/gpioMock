@@ -30,13 +30,14 @@ var exportUnexport = function(filename, data) {
   }
   if (filename === 'export' && !ofs.existsSync('./sys/class/gpio/gpio' + data)) {
     ofs.mkdirSync('./sys/class/gpio/gpio' + data);
-    ofs.writeFileSync('./sys/class/gpio/gpio' + data + '/direction', 'in');
-    ofs.writeFileSync('./sys/class/gpio/gpio' + data + '/value', '0');
-    ofs.writeFileSync('./sys/class/gpio/export', '');
   } else if(filename === 'unexport' && ofs.existsSync('./sys/class/gpio/gpio' + data)) {
     rimraf('./sys/class/gpio/gpio' + data, function(err, data) {
-      ofs.writeFileSync('./sys/class/gpio/unexport', '');
     });
+  }
+
+  if (filename === 'export') {
+    ofs.writeFileSync('./sys/class/gpio/gpio' + data + '/direction', 'in');
+    ofs.writeFileSync('./sys/class/gpio/gpio' + data + '/value', '0');
   }
 };
 
@@ -151,7 +152,6 @@ let start = function(mockLocation, callback) {
       startWatcher();
       callback();
     } else {
-      console.error(err);
       callback(err);
     }
   });
