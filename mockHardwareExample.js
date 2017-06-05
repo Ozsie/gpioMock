@@ -13,7 +13,7 @@ let functionHardware = function() {
   for (var id in hardwareMap) {
     var hardware = hardwareMap[id];
     if (hardware.stop || hardware.behavior !== 'function') {
-      return;
+      continue;
     }
     handleFunctionSensor(id, hardware);
   }
@@ -27,7 +27,7 @@ let staticHardware = function() {
   for (var id in hardwareMap) {
     var hardware = hardwareMap[id];
     if (hardware.stop || hardware.behavior !== 'static') {
-      return;
+      continue;
     }
     handleStaticSensor(id, hardware);
   }
