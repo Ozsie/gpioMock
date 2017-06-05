@@ -11,7 +11,7 @@ describe('index', function() {
   afterEach(function() {
     gpioMock.stop();
   });
-
+/*
   after(function(done) {
     rimraf('./sys', function() {
       rimraf('./mock', function() {
@@ -19,7 +19,7 @@ describe('index', function() {
       });
     });
   });
-
+*/
   it('writing to /sys/class/gpio/export using fs.writeFile() should create directories and files in mock directory', function(done) {
     gpioMock.start(function(err) {
       fs.writeFile('/sys/class/gpio/export', '1', function(err, data) {
@@ -109,4 +109,72 @@ describe('index', function() {
       });
     });
   });
+
+  it('adding mock hardware should update its mock path', function(done) {
+    gpioMock.start(function(err) {
+      gpioMock.addMockHardwareModule('ds18b20', './node_modules/ds18b20-gpio-mock/ds18b20.js', function(err) {
+        expect(err).to.not.exist;
+        gpioMock.addMockHardware('ds18b20', '1', {behavior: 'static', temperature: 12}, function(err) {
+          var tempData = fs.readFileSync('/sys/bus/w1/devices/1/w1_slave', 'utf8');
+          var tempDataFromMockPath = gpioMock.ofs.readFileSync('./sys/bus/w1/devices/1/w1_slave', 'utf8');
+          expect(tempData).to.equal('00 11 22 33 44 55 aa bb cc dd : crc=66 YES\n77 88 99 ee ff 00 11 22 33 44 t=12000');
+          expect(tempData).to.equal(tempDataFromMockPath);
+          done();
+        });
+      });
+    });
+  });
+
+  it('adding mock hardware module with existing id should return an error', function(done) {
+    gpioMock.start(function(err) {
+      gpioMock.addMockHardwareModule('ds18b20', './node_modules/ds18b20-gpio-mock/ds18b20.js', function(err) {
+        expect(err).to.not.exist;
+        gpioMock.addMockHardwareModule('ds18b20', './node_modules/ds18b20-gpio-mock/ds18b20.js', function(err) {
+          expect(err).to.exist;
+          done();
+        });
+      });
+    });
+  });
+
+  it('static/function mock hardware should update every 500 ms', function(done) {
+    gpioMock.start(function(err) {
+      gpioMock.addMockHardwareModule('ds18b20', './node_modules/ds18b20-gpio-mock/ds18b20.js', function(err) {
+        expect(err).to.not.exist;
+        gpioMock.addMockHardware('ds18b20', '1', {behavior: 'static', temperature: 12}, function(err) {
+          var tempDataBeforeWrite = fs.readFileSync('/sys/bus/w1/devices/1/w1_slave', 'utf8');
+          fs.writeFileSync('/sys/bus/w1/devices/1/w1_slave',
+                           '00 11 22 33 44 55 aa bb cc dd : crc=66 YES\n77 88 99 ee ff 00 11 22 33 44 t=32000',
+                           'utf8');
+          var tempDataAfterWrite = fs.readFileSync('/sys/bus/w1/devices/1/w1_slave', 'utf8');
+
+          expect(tempDataBeforeWrite).to.equal('00 11 22 33 44 55 aa bb cc dd : crc=66 YES\n77 88 99 ee ff 00 11 22 33 44 t=12000');
+          expect(tempDataAfterWrite).to.equal('00 11 22 33 44 55 aa bb cc dd : crc=66 YES\n77 88 99 ee ff 00 11 22 33 44 t=32000');
+          setTimeout(function() {
+            var tempDataAfterWait = fs.readFileSync('/sys/bus/w1/devices/1/w1_slave', 'utf8');
+            expect(tempDataAfterWait).to.equal(tempDataBeforeWrite);
+            done();
+          }, 600);
+        });
+      });
+    });
+  });
+
+  it('setting mock hardware should update it', function(done) {
+    gpioMock.start(function(err) {
+      gpioMock.addMockHardwareModule('ds18b20', './node_modules/ds18b20-gpio-mock/ds18b20.js', function(err) {
+        expect(err).to.not.exist;
+        gpioMock.addMockHardware('ds18b20', '1', {behavior: 'static', temperature: 12}, function(err) {
+          var tempDataBeforeSet = fs.readFileSync('/sys/bus/w1/devices/1/w1_slave', 'utf8');
+          expect(tempDataBeforeSet).to.equal('00 11 22 33 44 55 aa bb cc dd : crc=66 YES\n77 88 99 ee ff 00 11 22 33 44 t=12000');
+          gpioMock.setMockHardware('ds18b20', '1', {behavior: 'static', temperature: 32}, function(err) {
+            var tempDataAfterSet = fs.readFileSync('/sys/bus/w1/devices/1/w1_slave', 'utf8');
+            expect(tempDataAfterSet).to.equal('00 11 22 33 44 55 aa bb cc dd : crc=66 YES\n77 88 99 ee ff 00 11 22 33 44 t=32000');
+            done();
+          });
+        });
+      });
+    });
+  });
+
 });

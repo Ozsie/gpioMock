@@ -37,6 +37,7 @@
     "chai": "^4.0.0-canary.1",
     "istanbul": "^0.4.5",
     "coveralls": "^2.13.1",
-    "jsdoc": "^3.4.3"
+    "jsdoc": "^3.4.3",
+    "ds18b20-gpio-mock": "^1.0.0"
   }
 }
