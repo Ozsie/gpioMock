@@ -14,9 +14,10 @@ GPIO Mock redirects any fs function call concerning paths starting with '/sys/cl
 simulated hardware can function without changes to the code.
 
 ## Documentation
-Version [1.2.0](https://ozsie.github.io/gpioMock/gpio-mock/1.2.0)
+Version [1.2.1](https://ozsie.github.io/gpioMock/gpio-mock/1.2.1)
 
 #### Older versions
+* Version [1.2.0](https://ozsie.github.io/gpioMock/gpio-mock/1.2.0)
 * Version [1.1.2](https://ozsie.github.io/gpioMock/gpio-mock/1.1.2)
 * Version [1.1.1](https://ozsie.github.io/gpioMock/gpio-mock/1.1.1)
 * Version [1.1.0](https://ozsie.github.io/gpioMock/gpio-mock/1.1.0)
