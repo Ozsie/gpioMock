@@ -6,8 +6,8 @@
 
 A framework to mock GPIO by redirecting calls to /sys/class/gpio/* to ./sys/class/gpio/*
 
-This framework does not provide any simulated hardware, with the exception of DS18B20 digital thermomters which can be
-simulated in a number of ways.
+This framework does not provide any simulated hardware, however it features a system to add mocked hardware that is
+accessed through the file system.
 
 GPIO Mock redirects any fs function call concerning paths starting with '/sys/class/gpio' to (by default)
 './sys/class/gpio'. This means that tests that either do not require hardware, or tests that can function with
@@ -130,7 +130,7 @@ let f = {
 };
 
 gpioMock.start(function(err) {
-  gpioMock.addMockHardwareModule('ds18b20', 'ds18b20.js', function(err) {
+  gpioMock.addMockHardwareModule('ds18b20', 'node_modules/ds18b20-gpio-mock/ds18b20.js', function(err) {
     if (!err) {
       gpioMock.addMockHardware('ds18b20', '28-800000263717', f, function(err) {
         if (!err) {
@@ -161,9 +161,9 @@ For some more concrete examples, take a look at [Mash Control](https://github.co
 If the basic GPIO mocking is not enough, for example when using something that behaves similar to the DS18B20 digital
 thermometer, you can write a Mock Hardware module and add it as the above example shows.
 
-Have a look att ds18b20.js for a functioning implementation and mockHardwareExample.js for a skeleton. What is most
-important are the functions and variables exposed by the module. Below is the module.exports taken from
-mockHardwareExample.js
+Have a look att [DS18B20 GPIO Mock](https://github.com/Ozsie/ds18b20GpioMock) for a functioning implementation and
+mockHardwareExample.js for a skeleton. What is most important are the functions and variables exposed by the module.
+Below is the module.exports taken from mockHardwareExample.js
 
 ```
 module.exports = {

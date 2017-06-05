@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+    
+
+
+
+    
+
+
+    <h3>gpio-mock 1.2.1</h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>GPIO Mock</h1><p><a href="https://nodei.co/npm/gpio-mock/"><img src="https://nodei.co/npm/gpio-mock.png?downloads=true&amp;downloadRank=true&amp;stars=true" alt="NPM"></a></p>
+<p><a href="https://travis-ci.org/Ozsie/gpioMock"><img src="https://travis-ci.org/Ozsie/gpioMock.svg?branch=master" alt="Build Status"></a>
+<a href="https://coveralls.io/github/Ozsie/gpioMock?branch=master"><img src="https://coveralls.io/repos/github/Ozsie/gpioMock/badge.svg?branch=master" alt="Coverage Status"></a></p>
+<p>A framework to mock GPIO by redirecting calls to /sys/class/gpio/<em> to ./sys/class/gpio/</em></p>
+<p>This framework does not provide any simulated hardware, however it features a system to add mocked hardware that is
+accessed through the file system.</p>
+<p>GPIO Mock redirects any fs function call concerning paths starting with '/sys/class/gpio' to (by default)
+'./sys/class/gpio'. This means that tests that either do not require hardware, or tests that can function with
+simulated hardware can function without changes to the code.</p>
+<h2>Documentation</h2><p>Version <a href="https://ozsie.github.io/gpioMock/gpio-mock/1.2.0">1.2.0</a></p>
+<h4>Older versions</h4><ul>
+<li>Version <a href="https://ozsie.github.io/gpioMock/gpio-mock/1.1.2">1.1.2</a></li>
+<li>Version <a href="https://ozsie.github.io/gpioMock/gpio-mock/1.1.1">1.1.1</a></li>
+<li>Version <a href="https://ozsie.github.io/gpioMock/gpio-mock/1.1.0">1.1.0</a></li>
+<li>Version <a href="https://ozsie.github.io/gpioMock/gpio-mock/1.0.1">1.0.1</a></li>
+<li>Version <a href="https://ozsie.github.io/gpioMock/gpio-mock/1.0.0">1.0.0</a></li>
+</ul>
+<h2>Some examples</h2><h3>Using 'fs' directly</h3><p>####Test</p>
+<pre class="prettyprint source"><code>let gpioMock = require('gpio-mock');
+let fs = require('fs');
+
+gpioMock.start(function(err) {
+  fs.writeFile('/sys/class/gpio/export', '1', function(err) {
+    if (!err) {
+      // GPIO 1 is exported.
+      fs.writeFile('/sys/class/gpio/gpio1/direction', 'out', function(err) {
+        if (!err) {
+          // GPIO 1 is set to out
+          fs.writeFile('/sys/class/gpio/gpio1/value', 1, function(err) {
+            // GPIO 1 is set to high
+          }
+        }
+      });
+    }
+  });
+
+  // Reset changes to fs when done
+  gpioMock.stop();
+});</code></pre><h4>Simulated hardware</h4><pre class="prettyprint source"><code>let fs = require('fs');
+
+// Simulated LED
+function ledSwitch() {
+  setTimeout(function() {
+    fs.readFile('./sys/gpio/gpio1/value', 'utf8', function(err, fd) {
+      if (!err && fd === '1') {
+        console.log('LED is on!');
+      }
+    });
+    ledSwitch();
+  }, 200)
+}</code></pre><p>The simulated LED above could just as well be an IR LED, with a simulated IR receiver writing '1' to
+./sys/class/gpio/gpio2/value when GPIO1 is '1', and writing '2' when GPIO1 is '0';</p>
+<h3>Using mc-gpio</h3><p>####Test</p>
+<pre class="prettyprint source"><code>let gpioMock = require('gpio-mock');
+let gpio = require('mc-gpio');
+
+gpioMock.start(function(err) {
+  gpio.openPinOut(1, function(err, data) {
+    if (!err) {
+      // GPIO1 is open and set to out
+      gpio.write(1, '1', function(err, data) {
+        if (!err) {
+          // GPIO1 is set to high
+        }
+      }
+    }
+  });
+
+  // Reset changes to fs when done
+  gpioMock.stop();
+});</code></pre><h4>Simulated hardware</h4><pre class="prettyprint source"><code>let fs = require('fs');
+
+// Simulated LED
+function ledSwitch() {
+  setTimeout(function() {
+    fs.readFile('./sys/gpio/gpio1/value', 'utf8', function(err, fd) {
+      if (!err && fd === '1') {
+        console.log('LED is on!');
+      }
+    });
+    ledSwitch();
+  }, 200)
+}</code></pre><h3>Simulating DS18B20 digital thermometer</h3><pre class="prettyprint source"><code>let gpioMock = require('gpio-mock');
+let ds18b20 = require('mc-tempsensor');
+
+// Hardware definition for DS18B20;
+let f = {
+  &quot;behavior&quot;: &quot;function&quot;,
+  &quot;temperature&quot;: function() {
+    return Math.random() * 100000;
+  }
+};
+
+gpioMock.start(function(err) {
+  gpioMock.addMockHardwareModule('ds18b20', 'node_modules/ds18b20-gpio-mock/ds18b20.js', function(err) {
+    if (!err) {
+      gpioMock.addMockHardware('ds18b20', '28-800000263717', f, function(err) {
+        if (!err) {
+          tempsensor.init('28-800000263717');
+
+          tempSensor.readAndParse(function(err, data) {
+            if (err) {
+              // Handle error
+            } else {
+              console.log('Temperature is ' + data[0].temperature.celcius + ' C');
+            }
+          });
+        } else {
+          callback(err);
+        }
+      });
+    } else {
+      callback(err);
+    }
+  });
+});</code></pre><p>For some more concrete examples, take a look at <a href="https://github.com/Ozsie/mashControl">Mash Control</a></p>
+<h3>Adding additional mock hardware</h3><p>If the basic GPIO mocking is not enough, for example when using something that behaves similar to the DS18B20 digital
+thermometer, you can write a Mock Hardware module and add it as the above example shows.</p>
+<p>Have a look att <a href="https://github.com/Ozsie/ds18b20GpioMock">DS18B20 GPIO Mock</a> for a functioning implementation and
+mockHardwareExample.js for a skeleton. What is most important are the functions and variables exposed by the module.
+Below is the module.exports taken from mockHardwareExample.js</p>
+<pre class="prettyprint source"><code>module.exports = {
+  functionHardware: functionHardware,
+  staticHardware: staticHardware,
+  stop: stop,
+  add: add,
+  set: set,
+  remove: remove,
+  sysPath: sysPath,
+  mockPath: mockPath
+};</code></pre><p>This is the minimum required by GPIO Mock to work.</p>
+<ul>
+<li><code>functionHardware = function() {};</code><ul>
+<li>Called every 500 ms when updating mocked hardware. This is used to update mocked hardware according to a function</li>
+</ul>
+</li>
+<li><code>staticHardware = function() {};</code><ul>
+<li>Called every 500 ms when updating mocked hardware. This is used to reset mocked hardware to a set value, in case any
+external process has manipulated it.</li>
+</ul>
+</li>
+<li><code>stop = function() {};</code><ul>
+<li>Called when gpio-mock is stopped. This should stop everything in the mocked hardware module and clear all mocked
+hardware.</li>
+</ul>
+</li>
+<li><code>add = function(id, hardwareDefinition, callback) {};</code><ul>
+<li>Called to add a new instance of the mocked hardware. This function should not replace already existing mocked
+hardware.<ul>
+<li><code>id</code> a unique id for the mocked hardware instance</li>
+<li><code>hardwareDefinition</code> an object representing the hardware instance</li>
+<li><code>callback</code> callback function</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>set = function(id, hardwareDefinition, callback) {};</code><ul>
+<li>Called to replace an instance of the mocked hardware.<ul>
+<li><code>id</code> id for the mocked hardware instance to update the definition of</li>
+<li><code>hardwareDefinition</code> an object representing the hardware instance</li>
+<li><code>callback</code> callback function</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>remove = function(id, callback) {};</code><ul>
+<li>Called to remove an instance of the mocked hardware.<ul>
+<li><code>id</code> id of the mocked hardware instance to remove</li>
+<li><code>callback</code> callback function</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>sysPath</code><ul>
+<li>This is a constant string representation of any file system representation if the mocked hardware, it should point
+to the 'root' directory of the hardware in the file system.</li>
+</ul>
+</li>
+<li><code>mockPath</code><ul>
+<li>This is a variable string representation of the mocked file system representation. It can be given a default value, 
+however gpio-mock will overwrite it.</li>
+</ul>
+</li>
+</ul></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-gpio-mock.html">gpio-mock</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Mon Jun 05 2017 13:01:08 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
