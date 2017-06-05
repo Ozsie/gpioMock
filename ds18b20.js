@@ -90,15 +90,18 @@ let setDS18B20 = function(id, sensor, callback) {
   updateSensors(callback);
 };
 
+let remove = function(id, callback) {
+  ds18b20[id] = undefined;
+  callback();
+};
+
 module.exports = {
-  sensorFunction: sensorFunction,
-  handleFunctionSensor: handleFunctionSensor,
-  sensorStatic: sensorStatic,
-  handleStaticSensor: handleStaticSensor,
-  updateSensors: updateSensors,
+  functionHardware: sensorFunction,
+  staticHardware: sensorStatic,
   stop: stop,
-  addDS18B20: addDS18B20,
-  setDS18B20: setDS18B20,
+  add: addDS18B20,
+  set: setDS18B20,
+  remove: remove,
   sysPath: sysDS18B20Path,
   mockPath: mockDS18B20Path
 };

@@ -12,6 +12,14 @@ describe('index', function() {
     gpioMock.stop();
   });
 
+  after(function(done) {
+    rimraf('./sys', function() {
+      rimraf('./mock', function() {
+        done();
+      });
+    });
+  });
+
   it('writing to /sys/class/gpio/export using fs.writeFile() should create directories and files in mock directory', function(done) {
     gpioMock.start(function(err) {
       fs.writeFile('/sys/class/gpio/export', '1', function(err, data) {
@@ -23,6 +31,20 @@ describe('index', function() {
           var val = fs.openSync('./sys/class/gpio/gpio1/value', 'r');
           expect(dir).to.exist;
           expect(val).to.exist;
+          done();
+        });
+      });
+    });
+  });
+
+  it('writing to /sys/class/gpio/export using fs.writeFile() when value != number shuld do nothing', function(done) {
+    gpioMock.start(function(err) {
+      fs.writeFile('/sys/class/gpio/export', 'foo', function(err, data) {
+        expect(err).to.be.null;
+        expect(data).to.be.undefined;
+        fs.stat('./sys/class/gpio/gpiofoo', function (err, stats) {
+          expect(err).to.exist;
+          expect(stats).to.be.undefined;
           done();
         });
       });

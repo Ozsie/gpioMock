@@ -12,6 +12,15 @@ describe('ds18b20', function() {
     gpioMock.stop();
   });
 
+  it('adding mock hardware should result in callback with no error', function(done) {
+    gpioMock.start(function(err) {
+      gpioMock.addMockHardwareModule('ds18b20', './ds18b20.js', function(err) {
+        expect(err).to.not.exist;
+        done();
+      });
+    });
+  });
+
   it('adding sensor should result in callback with no error', function(done) {
     gpioMock.start(function(err) {
       let sensor = {
@@ -19,11 +28,27 @@ describe('ds18b20', function() {
         "temperature": "12"
       };
 
-      gpioMock.addDS18B20('1', sensor, function(err) {
-        expect(err).to.be.undefined;
-        setTimeout(function() {
-          done();
-        }, 1000);
+      gpioMock.addMockHardwareModule('ds18b20', './ds18b20.js', function(err) {
+        if (!err) {
+          gpioMock.addMockHardware('ds18b20', '1', sensor, function(err) {
+            expect(err).to.be.undefined;
+            done();
+          });
+        }
+      });
+    });
+  });
+
+  it('adding sensor when module is not registered should result in callback error', function(done) {
+    gpioMock.start(function(err) {
+      let sensor = {
+        "behavior": "static",
+        "temperature": "12"
+      };
+
+      gpioMock.addMockHardware('ds18b20', '1', sensor, function(err) {
+        expect(err).to.exist;
+        done();
       });
     });
   });
@@ -35,38 +60,42 @@ describe('ds18b20', function() {
         "temperature": "12"
       };
 
-      gpioMock.addDS18B20('1', sensor, function(err) {
-        gpioMock.addDS18B20('1', sensor, function(err) {
-          expect(err).to.exist;
-          setTimeout(function() {
-            done();
-          }, 1000);
-        });
+      gpioMock.addMockHardwareModule('ds18b20', './ds18b20.js', function(err) {
+        if (!err) {
+          gpioMock.addMockHardware('ds18b20', '1', sensor, function(err) {
+            gpioMock.addMockHardware('ds18b20', '1', sensor, function(err) {
+              expect(err).to.exist;
+              done();
+            });
+          });
+        }
       });
     });
   });
 
   it('sensors should be able to be added with different behaviors', function(done) {
     gpioMock.start(function(err) {
-      let external = { "behavior": "external", "temperature": "44" };
+      gpioMock.addMockHardwareModule('ds18b20', './ds18b20.js', function(err) {
+        if (!err) {
+          let external = { "behavior": "external", "temperature": "44" };
 
-      gpioMock.addDS18B20('2', external, function(err) {
-        expect(err).to.be.undefined;
-
-        let f = { "behavior": "function", "temperature": function() {return 55000;} };
-
-        gpioMock.addDS18B20('3', f, function(err) {
-          expect(err).to.be.undefined;
-
-          let stat = { "behavior": "static", "temperature": "23" };
-
-          gpioMock.addDS18B20('4', stat, function(err) {
+          gpioMock.addMockHardware('ds18b20', '2', external, function(err) {
             expect(err).to.be.undefined;
-            setTimeout(function() {
-              done();
-            }, 1000);
+
+            let f = { "behavior": "function", "temperature": function() {return 55000;} };
+
+            gpioMock.addMockHardware('ds18b20', '3', f, function(err) {
+              expect(err).to.be.undefined;
+
+              let stat = { "behavior": "static", "temperature": "23" };
+
+              gpioMock.addMockHardware('ds18b20', '4', stat, function(err) {
+                expect(err).to.be.undefined;
+                done();
+              });
+            });
           });
-        });
+        }
       });
     });
   });
