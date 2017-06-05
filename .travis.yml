@@ -1,6 +1,8 @@
 language: node_js
 node_js:
-  - "5.5.0"
+  - "latest"
+  - "6.10.3"
+  - "5"
 install:
   - "npm install"
 test:
