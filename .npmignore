@@ -6,3 +6,5 @@ coverage
 gpioMock.iml
 mock
 sys
+yarn-error.log
+yarn.lock
